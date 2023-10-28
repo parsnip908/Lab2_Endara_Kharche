@@ -58,6 +58,7 @@ void iu_t::advance_one_cycle() {
 
 // this interface method buffers a non-writeback request from the processor, returns true if cannot complete
 bool iu_t::from_proc(proc_cmd_t pc) {
+  NOTE_ARGS(("%d: pc_p = %d", node, proc_cmd_writeback_p));
   if (!proc_cmd_p) {
     proc_cmd_p = true;
     proc_cmd = pc;
@@ -70,6 +71,7 @@ bool iu_t::from_proc(proc_cmd_t pc) {
 
 // this interface method buffers a writeback request from the processor, returns true if cannot complete
 bool iu_t::from_proc_writeback(proc_cmd_t pc) {
+  NOTE_ARGS(("%d: pc_wb_p = %d", node, proc_cmd_writeback_p));
   if (!proc_cmd_writeback_p) {
     proc_cmd_writeback_p = true;
     proc_cmd_writeback = pc;
@@ -84,12 +86,12 @@ bool iu_t::process_proc_request(proc_cmd_t pc) {
   int dest = gen_node(pc.addr);
   int lcl = gen_local_cache_line(pc.addr);
 
-  NOTE_ARGS(("%d: addr = %d, dest = %d", node, pc.addr, dest));
+  NOTE_ARGS(("%d: addr = %d, dest = %d, busop = %d, permit = %d", node, pc.addr, dest, pc.busop, pc.permit_tag));
 
   if (dest == node) { // local
 
     ++local_accesses;
-    proc_cmd_p = false; // clear proc_cmd
+    //proc_cmd_p = false; // clear proc_cmd
     
     switch(pc.busop) {
     case READ:
@@ -116,7 +118,7 @@ bool iu_t::process_proc_request(proc_cmd_t pc) {
     net_cmd.dest = dest;
     net_cmd.proc_cmd = pc;
 
-    return(net->to_net(node, PRI1, net_cmd));
+    return(!net->to_net(node, PRI1, net_cmd));
   }
   return(false); // need to return something
 }
@@ -143,7 +145,7 @@ bool iu_t::process_net_request(net_cmd_t net_cmd) {
     net_cmd.proc_cmd = pc;
 
 
-    return(net->to_net(node, PRI0, net_cmd));
+    return(!net->to_net(node, PRI0, net_cmd));
       
   case WRITEBACK:
     copy_cache_line(mem[lcl], pc.data);
