@@ -29,8 +29,10 @@ void cache_t::reply(proc_cmd_t proc_cmd) {
   if (tags[car.set][car.way].permit_tag == MODIFIED) { // need to writeback since replacing modified line
     proc_cmd_t wb;
     wb.busop = WRITEBACK;
-    // ***** FYTD: calculate the correct writeback address ***** 
-    wb.addr = 0; // need a value for now
+    // ***** FYTD: calculate the correct writeback address *****
+    address_t addr_tag = tags[car.set][car.way].address_tag << address_tag_shift;
+    address_t addr_set = car.set << set_shift;
+    wb.addr = addr_tag | addr_set;
     copy_cache_line(wb.data, tags[car.set][car.way].data);
     if (iu->from_proc_writeback(wb)) {
       ERROR("should not retry a from_proc_writeback since there should only be one outstanding request");
@@ -39,6 +41,8 @@ void cache_t::reply(proc_cmd_t proc_cmd) {
 
   NOTE_ARGS(("%d: replacing addr_tag %d into set %d, assoc %d", node, car.address_tag, car.set, car.way));
   
+  // Change to fix Part 1
+  // if (proc_cmd.permit_tag == SHARED) proc_cmd.permit_tag = EXCLUSIVE;
   car.permit_tag = proc_cmd.permit_tag;
   cache_fill(car, proc_cmd.data);
 }
