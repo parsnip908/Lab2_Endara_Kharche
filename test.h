@@ -13,6 +13,8 @@ class proc_t {
 
   address_t addr;
   bool ld_p;
+  int test_step;
+  int data_store, data_load;
 
   cache_t *cache;
 
@@ -32,6 +34,8 @@ void finish_test();
 
 typedef struct {
   int addr_range;
+  int stage;
+  int* data;
 } test_args_t;
 
 
